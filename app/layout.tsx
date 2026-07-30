@@ -3,6 +3,8 @@ import { Providers } from "@/components/Providers";
 import { isAuthConfigured } from "@/lib/auth";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "yt.naturalabs.io /performance",
   description: "Private YouTube / Demand Gen creative performance dashboard",
