@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>yt.naturalabs.io/performance — UI Spec + Mockup</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222c;
+      --panel2: #232d3a;
+      --border: #2e3a48;
+      --text: #e8eef4;
+      --muted: #8b9aab;
+      --accent: #3d9cf0;
+      --accent2: #2bb673;
+      --warn: #e8a317;
+      --danger: #e35d6a;
+      --row: #1a222c;
+      --row-alt: #151c24;
+      --radius: 10px;
+      --font: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: linear-gradient(160deg, #0c1015 0%, #141b24 50%, #0f1419 100%);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+    header.app {
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+      justify-content: space-between; margin-bottom: 28px;
+      padding-bottom: 18px; border-bottom: 1px solid var(--border);
+    }
+    .brand { font-size: 1.15rem; font-weight: 700; letter-spacing: 0.02em; }
+    .brand span { color: var(--accent); font-weight: 500; }
+    .lock {
+      font-size: 0.8rem; color: var(--muted);
+      background: var(--panel); border: 1px solid var(--border);
+      padding: 6px 10px; border-radius: 999px;
+    }
+    h1 { font-size: 1.6rem; margin: 0 0 8px; }
+    h2 { font-size: 1.15rem; margin: 0 0 10px; }
+    h3 { font-size: 1rem; margin: 18px 0 8px; color: var(--accent); }
+    .muted { color: var(--muted); }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 18px;
+    }
+    .tabs {
+      display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 16px;
+    }
+    .tab {
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #041018;
+      font-weight: 600;
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 0.88rem;
+    }
+    th, td {
+      text-align: left; padding: 10px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      color: var(--muted); font-weight: 600; font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    tr:nth-child(even) td { background: var(--row-alt); }
+    a.link {
+      color: var(--accent); text-decoration: none; font-weight: 600;
+    }
+    a.link:hover { text-decoration: underline; }
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-size: 0.72rem; font-weight: 600;
+    }
+    .pill.ok { background: rgba(43,182,115,.2); color: #6ee7a8; }
+    .pill.warn { background: rgba(232,163,23,.2); color: #f0c35a; }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+    }
+    select, input {
+      background: var(--panel2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px; font-size: 0.85rem;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px; margin: 14px 0;
+    }
+    .kpi {
+      background: var(--panel2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px;
+    }
+    .kpi .label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; }
+    .kpi .value { font-size: 1.15rem; font-weight: 700; margin-top: 4px; }
+    .chart-fake {
+      height: 180px; border-radius: 8px; margin-top: 12px;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(61,156,240,.08) 100%),
+        repeating-linear-gradient(90deg, transparent, transparent 48px, var(--border) 49px),
+        var(--panel2);
+      border: 1px solid var(--border);
+      position: relative; overflow: hidden;
+    }
+    .chart-fake svg { width: 100%; height: 100%; }
+    .explain ol { padding-left: 1.2rem; }
+    .explain li { margin: 6px 0; }
+    .note {
+      border-left: 3px solid var(--accent);
+      padding: 8px 12px; margin-top: 12px;
+      background: rgba(61,156,240,.08); border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+    }
+    .back { font-size: 0.85rem; color: var(--muted); cursor: pointer; }
+    .back:hover { color: var(--accent); }
+    code {
+      background: var(--panel2);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    .flow {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.78rem;
+      line-height: 1.55;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      white-space: pre;
+      color: #c5d4e3;
+    }
+    .cred-table td:first-child { font-weight: 600; white-space: nowrap; }
+    .tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .tag.have { background: rgba(43,182,115,.2); color: #6ee7a8; }
+    .tag.new { background: rgba(61,156,240,.2); color: #7ec4f8; }
+    .tag.warn { background: rgba(232,163,23,.2); color: #f0c35a; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="app">
+      <div class="brand">yt.naturalabs.io <span>/performance</span></div>
+      <div class="lock">Google OAuth · @naturalabs.io only</div>
+    </header>
+
+    <div class="card explain">
+      <h1>What is this page?</h1>
+      <p class="muted">
+        A <strong>private internal dashboard</strong> for YouTube / Demand Gen creative performance.
+        Slack stays for spend alerts. This site is for browsing a leaderboard, pivot summaries,
+        and one-creative detail — with login so the link is not publicly usable.
+      </p>
+      <h3>The three views</h3>
+      <ol>
+        <li><strong>Leaderboard</strong> — ranked list of creatives (who’s winning).</li>
+        <li><strong>Pivot</strong> — rolled-up totals by client / campaign (like a pivot table).</li>
+        <li><strong>Creative detail</strong> — full 30d stats + chart for one video (like your Slack thread).</li>
+      </ol>
+      <div class="note">
+        Click the tabs below to see a <strong>sample UI</strong>. Data is fake/demo for layout only.
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="leaderboard">1. Leaderboard</button>
+      <button type="button" class="tab" data-tab="pivot">2. Pivot</button>
+      <button type="button" class="tab" data-tab="detail">3. Creative detail</button>
+      <button type="button" class="tab" data-tab="workflow">4. n8n workflow</button>
+      <button type="button" class="tab" data-tab="credentials">5. Credentials</button>
+      <button type="button" class="tab" data-tab="deploy">6. Deploy (GCP)</button>
+      <button type="button" class="tab" data-tab="explain">How it works</button>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <section id="leaderboard" class="panel active">
+      <div class="card">
+        <h2>Leaderboard</h2>
+        <p class="muted">Sorted list of creatives. Question it answers: <em>“What’s performing best right now?”</em></p>
+        <div class="toolbar">
+          <select>
+            <option>All clients</option>
+            <option>Terra Lotus</option>
+            <option>TherapetMD</option>
+            <option>Michael Todd Beauty</option>
+          </select>
+          <select>
+            <option>Sort: Spend 30d</option>
+            <option>Sort: ROAS</option>
+            <option>Sort: Conversions</option>
+          </select>
+          <input placeholder="Min spend $…" value="10000" />
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Client</th>
+              <th>Creative</th>
+              <th>Spend 30d</th>
+              <th>Conv</th>
+              <th>ROAS</th>
+              <th>Views</th>
+              <th>Tier</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Michael Todd Beauty</td>
+              <td><a class="link" href="#" data-goto="detail">W95</a></td>
+              <td>$30,878</td>
+              <td>210</td>
+              <td>1.15</td>
+              <td>120,400</td>
+              <td><span class="pill warn">20K</span></td>
+              <td><a class="link" href="https://www.youtube.com" target="_blank" rel="noopener">VIEW AD</a></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>TherapetMD</td>
+              <td><a class="link" href="#" data-goto="detail">M01 B001 Revamp V3</a></td>
+              <td>$28,763</td>
+              <td>188</td>
+              <td>0.98</td>
+              <td>95,200</td>
+              <td><span class="pill warn">20K</span></td>
+              <td><a class="link" href="https://www.youtube.com" target="_blank" rel="noopener">VIEW AD</a></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Terra Lotus</td>
+              <td><a class="link" href="#" data-goto="detail">M01 B003 Ingredient V2</a></td>
+              <td>$8,793</td>
+              <td>88</td>
+              <td>0.73</td>
+              <td>43,947</td>
+              <td><span class="pill ok">10K</span></td>
+              <td><a class="link" href="https://www.youtube.com" target="_blank" rel="noopener">VIEW AD</a></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>X-All Toilet Cleaner</td>
+              <td><a class="link" href="#" data-goto="detail">M04 B003 Aquoxis V1</a></td>
+              <td>$15,922</td>
+              <td>415</td>
+              <td>1.14</td>
+              <td>590,122</td>
+              <td><span class="pill warn">20K</span></td>
+              <td><a class="link" href="https://www.youtube.com" target="_blank" rel="noopener">VIEW AD</a></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note">
+          <strong>UI pieces:</strong> filters, sortable columns, tier badge (10K/20K/50K),
+          creative name → opens Detail, VIEW AD → YouTube.
+        </div>
+      </div>
+    </section>
+
+    <!-- PIVOT -->
+    <section id="pivot" class="panel">
+      <div class="card">
+        <h2>Pivot</h2>
+        <p class="muted">Rolled-up totals (like a Google Sheets pivot). Question: <em>“How is each client doing overall?”</em></p>
+        <div class="toolbar">
+          <select>
+            <option>Rows: Client</option>
+            <option>Rows: Client → Creative</option>
+            <option>Rows: Campaign</option>
+          </select>
+          <select>
+            <option>Values: Spend, Conv, ROAS</option>
+          </select>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Creatives</th>
+              <th>Spend 30d</th>
+              <th>Conversions</th>
+              <th>Conv value</th>
+              <th>ROAS*</th>
+              <th>Views</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Michael Todd Beauty</strong></td>
+              <td>8</td>
+              <td>$142,300</td>
+              <td>1,240</td>
+              <td>$158,000</td>
+              <td>1.11</td>
+              <td>890,000</td>
+            </tr>
+            <tr>
+              <td><strong>TherapetMD</strong></td>
+              <td>12</td>
+              <td>$96,500</td>
+              <td>820</td>
+              <td>$88,200</td>
+              <td>0.91</td>
+              <td>610,000</td>
+            </tr>
+            <tr>
+              <td><strong>Terra Lotus</strong></td>
+              <td>6</td>
+              <td>$41,200</td>
+              <td>310</td>
+              <td>$29,800</td>
+              <td>0.72</td>
+              <td>210,000</td>
+            </tr>
+            <tr>
+              <td><strong>X-All Toilet Cleaner</strong></td>
+              <td>5</td>
+              <td>$55,100</td>
+              <td>980</td>
+              <td>$62,400</td>
+              <td>1.13</td>
+              <td>1,200,000</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note">
+          *ROAS = total conv value ÷ total spend (not an average of row ROASes).
+          Same rule as your Sheet validation.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Pivot drill-down example (Client → Creative)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Client / Creative</th>
+              <th>Spend 30d</th>
+              <th>Conv</th>
+              <th>ROAS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4"><strong>Terra Lotus</strong></td></tr>
+            <tr>
+              <td style="padding-left:24px">M01 B003 Ingredient V2</td>
+              <td>$8,793</td><td>88</td><td>0.73</td>
+            </tr>
+            <tr>
+              <td style="padding-left:24px">M01 B003 Pricing Testimonial V3</td>
+              <td>$6,410</td><td>52</td><td>0.68</td>
+            </tr>
+            <tr><td colspan="4"><strong>TherapetMD</strong></td></tr>
+            <tr>
+              <td style="padding-left:24px">M01 B001 Revamp V3</td>
+              <td>$28,763</td><td>188</td><td>0.98</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DETAIL -->
+    <section id="detail" class="panel">
+      <div class="card">
+        <div class="back" data-goto="leaderboard">← Back to leaderboard</div>
+        <h2 style="margin-top:10px">Creative detail</h2>
+        <p class="muted">One creative’s full story — same idea as your Slack 30-day thread + main alert.</p>
+
+        <p style="margin:12px 0 4px">
+          <strong>Terra Lotus</strong> · M01 B003 Ingredient Animation V2 16x9
+          · <a class="link" href="https://www.youtube.com" target="_blank" rel="noopener">VIEW AD HERE</a>
+        </p>
+        <p class="muted" style="margin:0">Launch: April 29th, 2026 · Active days: 80 · Lifetime spend: $10,890</p>
+
+        <div class="kpi-grid">
+          <div class="kpi"><div class="label">Spend 30d</div><div class="value">$8,793</div></div>
+          <div class="kpi"><div class="label">Conversions</div><div class="value">88</div></div>
+          <div class="kpi"><div class="label">Cost / Conv</div><div class="value">$99.92</div></div>
+          <div class="kpi"><div class="label">ROAS</div><div class="value">0.73</div></div>
+          <div class="kpi"><div class="label">Views</div><div class="value">43,947</div></div>
+          <div class="kpi"><div class="label">CPV</div><div class="value">$0.20</div></div>
+          <div class="kpi"><div class="label">CTR</div><div class="value">1.25%</div></div>
+          <div class="kpi"><div class="label">CPC</div><div class="value">$3.12</div></div>
+        </div>
+
+        <h3>Video play-through (30d)</h3>
+        <p class="muted" style="margin:0">25% 32.1% · 50% 23.7% · 75% 20.0% · 100% 15.9%</p>
+        <div class="chart-fake">
+          <svg viewBox="0 0 700 180" preserveAspectRatio="none" aria-hidden="true">
+            <polyline fill="none" stroke="#eb3639" stroke-width="3"
+              points="40,30 190,70 340,95 490,110 660,125" />
+            <circle cx="40" cy="30" r="4" fill="#3d9cf0"/>
+            <circle cx="190" cy="70" r="4" fill="#3d9cf0"/>
+            <circle cx="340" cy="95" r="4" fill="#3d9cf0"/>
+            <circle cx="490" cy="110" r="4" fill="#3d9cf0"/>
+            <circle cx="660" cy="125" r="4" fill="#3d9cf0"/>
+          </svg>
+        </div>
+
+        <h3>Optional: spend by campaign</h3>
+        <table>
+          <thead>
+            <tr><th>Campaign</th><th>Spend 30d</th><th>Conv</th><th>Views</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>[N] YT DG | Balm | M1B3V2 | …</td><td>$6,732</td><td>71</td><td>30,400</td></tr>
+            <tr><td>Other campaigns…</td><td>$2,061</td><td>17</td><td>13,547</td></tr>
+          </tbody>
+        </table>
+        <div class="note">
+          This is the page you open when you click a creative on the Leaderboard.
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKFLOW -->
+    <section id="workflow" class="panel">
+      <div class="card explain">
+        <h2>How we wire this into the n8n workflow</h2>
+        <p class="muted">
+          Keep the existing Slack alert flow. Add a <strong>performance store write</strong>
+          so the private web app can read leaderboard / pivot / detail data.
+        </p>
+
+        <h3>End-to-end flow</h3>
+        <div class="flow">Google Ads API
+      ↓
+n8n (existing creative spend alerts)
+      ↓
+Format Merge 30-Day Metrics + Quartile   ← already has KPIs
+      ↓
+NEW: Upsert Performance Store            ← Sheet tab or BigQuery
+      ↓
+(rest unchanged) Chart → IF → Launch Date → Slack → Write Alert Log
+      ↓
+yt.naturalabs.io/performance (Next.js)
+      ↓
+Google OAuth (@naturalabs.io only) → Leaderboard / Pivot / Detail</div>
+
+        <h3>Where to add the new node (per branch: 50K / 20K / 10K)</h3>
+        <div class="flow">… → Format Merge 30-Day Metrics + Quartile
+          ↓
+     Upsert Performance Store   ← NEW (Google Sheets Append/Update OR BigQuery)
+          ↓
+     Create Short Chart URL → IF → Get Launch Date → Format Launch Date
+          ↓
+     Slack message → Send a message → Write Alert Log</div>
+
+        <div class="note">
+          <strong>Best practice:</strong> write performance rows from Format Merge (all creatives that reach metrics),
+          not only after Slack — so the leaderboard can include more than just alerted creatives.
+          For a full client leaderboard, add a separate nightly “refresh all creatives” workflow later.
+        </div>
+      </div>
+
+      <div class="card explain">
+        <h2>What the new n8n node writes</h2>
+        <p class="muted">One row per creative (upsert on <code>client_id + asset_id</code>).</p>
+        <table>
+          <thead>
+            <tr><th>Field</th><th>From node / field</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>pulled_at</td><td><code>{{ $now }}</code></td></tr>
+            <tr><td>client_id, client_name</td><td>Format Merge / Switch item</td></tr>
+            <tr><td>asset_id, ad_name, youtube_url</td><td>Format Merge</td></tr>
+            <tr><td>campaign_name</td><td>Format Merge</td></tr>
+            <tr><td>launch_date, active_days</td><td>Format Launch Date (late) — or leave blank until that step</td></tr>
+            <tr><td>spend_lifetime</td><td>Dedupe / alert spend</td></tr>
+            <tr><td>spend_30d, conversions, conv_value</td><td>Format Merge</td></tr>
+            <tr><td>impressions, clicks, views</td><td>Format Merge</td></tr>
+            <tr><td>ctr, cpc, cpm, cpv, roas, conv_rate</td><td>Format Merge</td></tr>
+            <tr><td>q25–q100</td><td>Format Merge</td></tr>
+            <tr><td>duration_seconds</td><td>Video length in seconds (for play-through time axis)</td></tr>
+            <tr><td>threshold / alert_level</td><td>10k / 20k / 50k</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card explain">
+        <h2>No webhook needed</h2>
+        <p class="muted">
+          n8n does <strong>not</strong> call the web app. Sheets/BigQuery do not notify the app.
+          n8n <strong>writes</strong> rows; the Next.js app <strong>reads</strong> on page load.
+        </p>
+      </div>
+
+      <div class="card explain">
+        <h2>Two build options</h2>
+        <table>
+          <thead>
+            <tr><th>Option</th><th>Store</th><th>n8n node</th><th>App reads with</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>MVP (faster)</strong></td>
+              <td>Private Google Sheet tab <code>performance_leaderboard</code></td>
+              <td>Google Sheets — Append or Update row</td>
+              <td>Service account → Sheets API</td>
+            </tr>
+            <tr>
+              <td><strong>Scale (better)</strong></td>
+              <td>BigQuery table <code>creative_performance_30d</code></td>
+              <td>BigQuery — Insert / Upsert</td>
+              <td>Service account → BigQuery</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="note">
+          Sheet stays <strong>not shared publicly</strong>. Only the service account + n8n credential can access it.
+          Humans use <code>yt.naturalabs.io/performance</code> only.
+        </div>
+      </div>
+
+      <div class="card explain">
+        <h2>App side</h2>
+        <ol>
+          <li>Deploy Next.js to <strong>GCP Cloud Run</strong> (recommended) → DNS <code>yt.naturalabs.io</code></li>
+          <li>Route <code>/performance</code> → Leaderboard (default)</li>
+          <li>Server reads Sheet with service account (never in browser)</li>
+          <li>NextAuth Google login → reject any email not ending in <code>@naturalabs.io</code></li>
+          <li>Optional: Cloudflare Access / IAP for a second gate</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- CREDENTIALS -->
+    <section id="credentials" class="panel">
+      <div class="card explain">
+        <h2>Credentials checklist</h2>
+        <p class="muted">
+          What you already have vs what you need — and <strong>how to get each env var</strong>.
+        </p>
+
+        <h3>A) Already used in n8n (keep these)</h3>
+        <table class="cred-table">
+          <thead>
+            <tr><th>Credential</th><th>Used for</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Google Ads OAuth2<br/><span class="muted">e.g. Mark_Clickbait</span></td>
+              <td>Get Video Ad Spend, Get 30d Metrics, Quartiles, Launch Date</td>
+              <td><span class="tag have">HAVE</span></td>
+            </tr>
+            <tr>
+              <td>Google Ads developer-token</td>
+              <td>HTTP header on Ads API calls</td>
+              <td><span class="tag have">HAVE</span></td>
+            </tr>
+            <tr>
+              <td>login-customer-id (MCC)</td>
+              <td>e.g. <code>4065948849</code> — manager account header</td>
+              <td><span class="tag have">HAVE</span></td>
+            </tr>
+            <tr>
+              <td>Slack bot token / Slack credential</td>
+              <td>50K / 20K / 10K messages + thread replies</td>
+              <td><span class="tag have">HAVE</span></td>
+            </tr>
+            <tr>
+              <td>Google Sheets credential (n8n)</td>
+              <td>Write Alert Log + <strong>Upsert Performance Store</strong></td>
+              <td><span class="tag have">HAVE</span></td>
+            </tr>
+            <tr>
+              <td>QuickChart (optional API key)</td>
+              <td>Create Short Chart URL</td>
+              <td><span class="tag have">HAVE</span> / optional</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card explain">
+        <h3>B) Env vars — how to get each one</h3>
+        <table class="cred-table">
+          <thead>
+            <tr><th>Env var</th><th>How to get it</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>GOOGLE_CLIENT_ID</code><br/><code>GOOGLE_CLIENT_SECRET</code></td>
+              <td>
+                GCP → <strong>APIs &amp; Services → Credentials → Create OAuth client ID</strong><br/>
+                Type: <strong>Web application</strong>. Copy Client ID + Client secret.
+              </td>
+              <td><span class="tag new">NEW</span></td>
+            </tr>
+            <tr>
+              <td><code>NEXTAUTH_SECRET</code></td>
+              <td>
+                Generate a random string:<br/>
+                <code>openssl rand -base64 32</code>
+              </td>
+              <td><span class="tag new">NEW</span></td>
+            </tr>
+            <tr>
+              <td><code>NEXTAUTH_URL</code></td>
+              <td>Public site URL: <code>https://yt.naturalabs.io</code> (local: <code>http://localhost:3000</code>)</td>
+              <td><span class="tag new">NEW</span></td>
+            </tr>
+            <tr>
+              <td><code>ALLOWED_EMAIL_DOMAIN</code></td>
+              <td>Set to <code>naturalabs.io</code> — only <code>@naturalabs.io</code> can sign in</td>
+              <td><span class="tag new">NEW</span></td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_SERVICE_ACCOUNT_EMAIL</code><br/><code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code></td>
+              <td>
+                GCP → <strong>IAM → Service Accounts → Create</strong> → Keys → JSON.<br/>
+                Use JSON fields <code>client_email</code> and <code>private_key</code>.<br/>
+                Enable <strong>Google Sheets API</strong> on the project.
+              </td>
+              <td><span class="tag new">NEW</span></td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_SHEETS_SPREADSHEET_ID</code></td>
+              <td>
+                From Sheet URL:<br/>
+                <code>https://docs.google.com/spreadsheets/d/<strong>SPREADSHEET_ID</strong>/edit</code><br/>
+                Share Sheet with the service account email (Viewer; Editor if n8n uses same SA).
+              </td>
+              <td><span class="tag new">NEW</span></td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_SHEETS_TAB</code></td>
+              <td>Tab name exactly: <code>performance_leaderboard</code> (header row required)</td>
+              <td><span class="tag new">NEW</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card explain">
+        <h3>C) Env file template</h3>
+        <div class="flow"># Auth (user login)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=https://yt.naturalabs.io
+ALLOWED_EMAIL_DOMAIN=naturalabs.io
+
+# Data (server-only — service account)
+GOOGLE_SERVICE_ACCOUNT_EMAIL=
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=
+GOOGLE_SHEETS_SPREADSHEET_ID=
+GOOGLE_SHEETS_TAB=performance_leaderboard</div>
+        <div class="note">
+          <strong>Never</strong> put the service account key, OAuth secret, or Ads developer token in frontend JS.
+          Only the Next.js server / Cloud Run env uses them.
+          For <code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code>, keep <code>\n</code> escapes inside quotes.
+        </div>
+      </div>
+
+      <div class="card explain">
+        <h3>D) OAuth client settings (copy exactly)</h3>
+        <table>
+          <thead>
+            <tr><th>Setting</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Application type</td><td>Web application</td></tr>
+            <tr>
+              <td>Authorized JavaScript origins</td>
+              <td>
+                <code>https://yt.naturalabs.io</code><br/>
+                <code>http://localhost:3000</code> (local)
+              </td>
+            </tr>
+            <tr>
+              <td>Authorized redirect URIs</td>
+              <td>
+                <code>https://yt.naturalabs.io/api/auth/callback/google</code><br/>
+                <code>http://localhost:3000/api/auth/callback/google</code> (local)
+              </td>
+            </tr>
+            <tr><td>Sign-in allow rule</td><td>email ends with <code>@naturalabs.io</code> only</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card explain">
+        <h3>E) Step-by-step: create OAuth web client</h3>
+        <ol>
+          <li>Open <a class="link" href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a></li>
+          <li><strong>APIs &amp; Services → OAuth consent screen</strong> — configure (Internal if Workspace)</li>
+          <li><strong>Credentials → Create credentials → OAuth client ID</strong></li>
+          <li>Application type: <strong>Web application</strong></li>
+          <li>Add origins + redirect URIs from section D</li>
+          <li>Copy <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code></li>
+        </ol>
+      </div>
+
+      <div class="card explain">
+        <h3>F) Step-by-step: service account + Sheet</h3>
+        <ol>
+          <li>GCP → <strong>IAM &amp; Admin → Service Accounts → Create</strong> (e.g. <code>yt-performance-reader</code>)</li>
+          <li><strong>Keys → Add key → JSON</strong> — download; map to email + private key env vars</li>
+          <li><strong>APIs &amp; Services → Library → Google Sheets API → Enable</strong></li>
+          <li>Create a private Google Sheet; tab name <code>performance_leaderboard</code>; add header row</li>
+          <li>Copy spreadsheet ID from the URL into <code>GOOGLE_SHEETS_SPREADSHEET_ID</code></li>
+          <li>Share Sheet with the service account email (Viewer minimum)</li>
+          <li>Give n8n Sheets credential write access to the same Sheet</li>
+        </ol>
+      </div>
+
+      <div class="card explain">
+        <h3>G) Who owns what</h3>
+        <table>
+          <thead>
+            <tr><th>System</th><th>Credentials</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>n8n</strong></td>
+              <td>Google Ads OAuth, developer-token, MCC login-customer-id, Slack, Sheets (alert log + performance write)</td>
+            </tr>
+            <tr>
+              <td><strong>Web app (Cloud Run)</strong></td>
+              <td>Google OAuth web client (user login), NextAuth secret, Service account (read Sheet)</td>
+            </tr>
+            <tr>
+              <td><strong>DNS / Access</strong></td>
+              <td>Subdomain + TLS; optional Cloudflare Access / IAP for @naturalabs.io</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DEPLOY -->
+    <section id="deploy" class="panel">
+      <div class="card explain">
+        <h2>Deploy on GCP (Cloud Run)</h2>
+        <p class="muted">
+          Recommended host for this Next.js app. n8n stays where it is — only the website moves to Cloud Run.
+        </p>
+        <div class="flow">GitHub / Docker build
+      ↓
+Artifact Registry (container image)
+      ↓
+Cloud Run service
+      ↓
+Custom domain: yt.naturalabs.io
+      ↓
+Google OAuth + Sheet read via env / Secret Manager</div>
+      </div>
+
+      <div class="card explain">
+        <h3>Deploy checklist</h3>
+        <ol>
+          <li>Create Sheet + headers; n8n upsert writing rows</li>
+          <li>Service account can read the Sheet; OAuth web client created</li>
+          <li>Enable Cloud Run, Artifact Registry, Secret Manager APIs</li>
+          <li>Build Next.js container (standalone) → push to Artifact Registry</li>
+          <li>Deploy Cloud Run service; set env vars / secrets (section 5)</li>
+          <li>Map custom domain <code>yt.naturalabs.io</code></li>
+          <li>Update OAuth origins/redirects to production URL</li>
+          <li>Sign in with <code>@naturalabs.io</code> — confirm live data (not Demo)</li>
+        </ol>
+        <div class="note">
+          Cloud Run: allow unauthenticated ingress (the app handles Google login).
+          Suggested: 1 vCPU, 512MB–1GB RAM. Prefer Secret Manager for secrets.
+        </div>
+      </div>
+
+      <div class="card explain">
+        <h3>Local vs production</h3>
+        <table>
+          <thead>
+            <tr><th></th><th>Local</th><th>Production</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>NEXTAUTH_URL</code></td>
+              <td><code>http://localhost:3000</code></td>
+              <td><code>https://yt.naturalabs.io</code></td>
+            </tr>
+            <tr>
+              <td>OAuth origins / redirects</td>
+              <td>include localhost</td>
+              <td>include production URL</td>
+            </tr>
+            <tr>
+              <td>Empty auth + Sheet env</td>
+              <td>Fixture / demo data works</td>
+              <td>Must set all env vars for live data + login</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EXPLAIN -->
+    <section id="explain" class="panel">
+      <div class="card explain">
+        <h2>How the three views fit together</h2>
+        <ol>
+          <li>User opens <code>https://yt.naturalabs.io/performance</code></li>
+          <li>Google login — only <code>@naturalabs.io</code> allowed</li>
+          <li>Default view = <strong>Leaderboard</strong></li>
+          <li>Switch to <strong>Pivot</strong> for client rollups</li>
+          <li>Click a creative → <strong>Detail</strong> (KPIs + chart + campaigns)</li>
+        </ol>
+        <h3>Data flow</h3>
+        <p class="muted">
+          n8n / Google Ads → private Sheet → this app reads via service account.
+          Users never get a public Sheet link. No webhooks.
+        </p>
+        <h3>What to build first</h3>
+        <ol>
+          <li>Leaderboard only (fastest value)</li>
+          <li>OAuth lock</li>
+          <li>Creative detail</li>
+          <li>Pivot last</li>
+        </ol>
+        <div class="note">
+          See tabs <strong>4. n8n</strong>, <strong>5. Credentials</strong>, and <strong>6. Deploy</strong> for implementation detail.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const panels = document.querySelectorAll('.panel');
+
+    function activate(id) {
+      tabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === id));
+      panels.forEach((p) => p.classList.toggle('active', p.id === id));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    tabs.forEach((t) => t.addEventListener('click', () => activate(t.dataset.tab)));
+
+    document.querySelectorAll('[data-goto]').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        activate(el.getAttribute('data-goto'));
+      });
+    });
+  </script>
+</body>
+</html>
