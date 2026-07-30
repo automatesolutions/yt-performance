@@ -58,11 +58,42 @@ const NUMERIC_FIELDS = new Set<keyof CreativePerformance>([
   "duration_seconds",
 ]);
 
+function getEnv(name: string): string | undefined {
+  return process.env[name]?.trim();
+}
+
+/** Normalize PEM private keys pasted into Cloud Run / .env (quotes, escaped newlines). */
+function normalizePrivateKey(raw: string): string {
+  let key = raw.trim();
+
+  // Common Cloud Run paste from JSON: \"-----BEGIN...-----\\n\"
+  key = key.replace(/^\\"/, '"').replace(/\\"$/, '"');
+
+  // Strip wrapping quotes (repeat for double-wrapped values).
+  for (let i = 0; i < 2; i++) {
+    if (
+      (key.startsWith('"') && key.endsWith('"')) ||
+      (key.startsWith("'") && key.endsWith("'"))
+    ) {
+      key = key.slice(1, -1).trim();
+    }
+  }
+
+  // Convert escaped newlines from env/JSON strings into real PEM line breaks.
+  key = key
+    .replace(/\\n/g, "\n")
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
+
+  return key.trim();
+}
+
 function sheetsConfigured(): boolean {
   return Boolean(
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
-      process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY &&
-      process.env.GOOGLE_SHEETS_SPREADSHEET_ID,
+    getEnv("GOOGLE_SERVICE_ACCOUNT_EMAIL") &&
+      getEnv("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY") &&
+      getEnv("GOOGLE_SHEETS_SPREADSHEET_ID"),
   );
 }
 
@@ -126,13 +157,16 @@ function rowFromValues(
 }
 
 async function fetchFromSheets(): Promise<CreativePerformance[]> {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!;
-  const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY!.replace(
-    /\\n/g,
-    "\n",
-  );
-  const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID!;
-  const tab = process.env.GOOGLE_SHEETS_TAB || "performance_leaderboard";
+  const email = getEnv("GOOGLE_SERVICE_ACCOUNT_EMAIL")!;
+  const key = normalizePrivateKey(getEnv("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY")!);
+  const spreadsheetId = getEnv("GOOGLE_SHEETS_SPREADSHEET_ID")!;
+  const tab = getEnv("GOOGLE_SHEETS_TAB") || "performance_leaderboard";
+
+  if (!key.includes("BEGIN") || !key.includes("PRIVATE KEY")) {
+    throw new Error(
+      "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY is not a valid PEM private key (missing BEGIN PRIVATE KEY).",
+    );
+  }
 
   const auth = new google.auth.JWT({
     email,
