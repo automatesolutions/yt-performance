@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+function getEnv(name: string): string | undefined {
+  return process.env[name]?.trim();
+}
+
 function authConfigured(): boolean {
   return Boolean(
-    process.env.GOOGLE_CLIENT_ID &&
-      process.env.GOOGLE_CLIENT_SECRET &&
-      process.env.NEXTAUTH_SECRET,
+    getEnv("GOOGLE_CLIENT_ID") &&
+      getEnv("GOOGLE_CLIENT_SECRET") &&
+      getEnv("NEXTAUTH_SECRET"),
   );
 }
 
@@ -18,7 +22,7 @@ export async function middleware(req: NextRequest) {
 
   const token = await getToken({
     req,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: getEnv("NEXTAUTH_SECRET"),
   });
 
   if (!token) {

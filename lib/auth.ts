@@ -1,8 +1,12 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
+function getEnv(name: string): string | undefined {
+  return process.env[name]?.trim();
+}
+
 function getAllowedDomains(): string[] {
-  const multiDomainEnv = process.env.ALLOWED_EMAIL_DOMAINS;
+  const multiDomainEnv = getEnv("ALLOWED_EMAIL_DOMAINS");
   if (multiDomainEnv) {
     const parsed = multiDomainEnv
       .split(",")
@@ -12,7 +16,7 @@ function getAllowedDomains(): string[] {
     if (parsed.length > 0) return parsed;
   }
 
-  const singleDomain = process.env.ALLOWED_EMAIL_DOMAIN?.trim().toLowerCase();
+  const singleDomain = getEnv("ALLOWED_EMAIL_DOMAIN")?.toLowerCase();
   return singleDomain ? [singleDomain] : ["naturalabs.io"];
 }
 
@@ -21,8 +25,8 @@ const allowedDomains = getAllowedDomains();
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "unset",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "unset",
+      clientId: getEnv("GOOGLE_CLIENT_ID") || "unset",
+      clientSecret: getEnv("GOOGLE_CLIENT_SECRET") || "unset",
     }),
   ],
   pages: {
@@ -42,13 +46,13 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: getEnv("NEXTAUTH_SECRET"),
 };
 
 export function isAuthConfigured(): boolean {
   return Boolean(
-    process.env.GOOGLE_CLIENT_ID &&
-      process.env.GOOGLE_CLIENT_SECRET &&
-      process.env.NEXTAUTH_SECRET,
+    getEnv("GOOGLE_CLIENT_ID") &&
+      getEnv("GOOGLE_CLIENT_SECRET") &&
+      getEnv("NEXTAUTH_SECRET"),
   );
 }
