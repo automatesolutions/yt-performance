@@ -133,6 +133,17 @@
       background: rgba(61,156,240,.08); border-radius: 0 8px 8px 0;
       font-size: 0.9rem;
     }
+    .note.warn {
+      border-left-color: var(--warn);
+      background: rgba(232,163,23,.1);
+    }
+    .note.danger {
+      border-left-color: var(--danger);
+      background: rgba(227,93,106,.1);
+    }
+    .cm-table td:nth-child(1) { width: 22%; font-weight: 600; }
+    .cm-table td:nth-child(2) { width: 38%; color: var(--muted); }
+    .cm-table td:nth-child(3) { width: 40%; }
     .back { font-size: 0.85rem; color: var(--muted); cursor: pointer; }
     .back:hover { color: var(--accent); }
     code {
@@ -166,6 +177,8 @@
     .tag.have { background: rgba(43,182,115,.2); color: #6ee7a8; }
     .tag.new { background: rgba(61,156,240,.2); color: #7ec4f8; }
     .tag.warn { background: rgba(232,163,23,.2); color: #f0c35a; }
+    .tag.danger { background: rgba(227,93,106,.22); color: #f5a0a8; }
+    .tag.fix { background: rgba(43,182,115,.25); color: #8ef0b8; }
   </style>
 </head>
 <body>
@@ -190,6 +203,8 @@
       </ol>
       <div class="note">
         Click the tabs below to see a <strong>sample UI</strong>. Data is fake/demo for layout only.
+        Ops docs: <strong>5. Credentials</strong> (how to get env), <strong>6. Deploy</strong>,
+        <strong>7. Countermeasures</strong> (security + production pitfalls).
       </div>
     </div>
 
@@ -200,6 +215,7 @@
       <button type="button" class="tab" data-tab="workflow">4. n8n workflow</button>
       <button type="button" class="tab" data-tab="credentials">5. Credentials</button>
       <button type="button" class="tab" data-tab="deploy">6. Deploy (GCP)</button>
+      <button type="button" class="tab" data-tab="countermeasures">7. Countermeasures</button>
       <button type="button" class="tab" data-tab="explain">How it works</button>
     </div>
 
@@ -607,88 +623,131 @@ Google OAuth (@naturalabs.io only) → Leaderboard / Pivot / Detail</div>
       </div>
 
       <div class="card explain">
-        <h3>B) Env vars — how to get each one</h3>
+        <h3>B) <code>.env</code> vars — how to get each one (methods)</h3>
+        <p class="muted">
+          Same keys as local <code>.env</code> / Cloud Run Variables. Values below are methods only —
+          <strong>never paste real secrets into this HTML or git</strong>.
+        </p>
         <table class="cred-table">
           <thead>
-            <tr><th>Env var</th><th>How to get it</th><th>Status</th></tr>
+            <tr><th>Env var</th><th>Method (where it comes from)</th><th>Where used</th></tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>GOOGLE_CLIENT_ID</code><br/><code>GOOGLE_CLIENT_SECRET</code></td>
+              <td><code>GOOGLE_CLIENT_ID</code></td>
               <td>
-                GCP → <strong>APIs &amp; Services → Credentials → Create OAuth client ID</strong><br/>
-                Type: <strong>Web application</strong>. Copy Client ID + Client secret.
+                <strong>GCP Console</strong> → project <code>naturalabs-youtube-performance</code> →
+                <strong>APIs &amp; Services → Credentials</strong> → OAuth 2.0 Client ID (Web application).<br/>
+                Copy the Client ID (ends with <code>.apps.googleusercontent.com</code>). Full value — do not truncate.
               </td>
-              <td><span class="tag new">NEW</span></td>
+              <td>NextAuth Google login</td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_CLIENT_SECRET</code></td>
+              <td>
+                Same OAuth client → <strong>Client secret</strong> (starts with <code>GOCSPX-</code>).<br/>
+                If rotated, update both local <code>.env</code> and Cloud Run.
+              </td>
+              <td>NextAuth Google login</td>
             </tr>
             <tr>
               <td><code>NEXTAUTH_SECRET</code></td>
               <td>
-                Generate a random string:<br/>
-                <code>openssl rand -base64 32</code>
+                Generate once locally:<br/>
+                <code>openssl rand -base64 32</code><br/>
+                Or PowerShell: <code>[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Max 256 }) -as [byte[]])</code><br/>
+                Same secret must be set in local <code>.env</code> and Cloud Run.
               </td>
-              <td><span class="tag new">NEW</span></td>
+              <td>Session / JWT signing</td>
             </tr>
             <tr>
               <td><code>NEXTAUTH_URL</code></td>
-              <td>Public site URL: <code>https://yt.naturalabs.io</code> (local: <code>http://localhost:3000</code>)</td>
-              <td><span class="tag new">NEW</span></td>
+              <td>
+                Exact public base URL of the app (no trailing slash).<br/>
+                Local: <code>http://localhost:3000</code><br/>
+                Current Cloud Run: <code>https://yt-performance-485547784117.europe-west1.run.app</code><br/>
+                Future custom domain: <code>https://yt.naturalabs.io</code>
+              </td>
+              <td>OAuth callback base</td>
             </tr>
             <tr>
               <td><code>ALLOWED_EMAIL_DOMAIN</code></td>
-              <td>Set to <code>naturalabs.io</code> — only <code>@naturalabs.io</code> can sign in</td>
-              <td><span class="tag new">NEW</span></td>
+              <td>Set manually to the company domain, e.g. <code>naturalabs.io</code> (single-domain fallback).</td>
+              <td>Sign-in allowlist</td>
             </tr>
             <tr>
-              <td><code>GOOGLE_SERVICE_ACCOUNT_EMAIL</code><br/><code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code></td>
+              <td><code>ALLOWED_EMAIL_DOMAINS</code></td>
               <td>
-                GCP → <strong>IAM → Service Accounts → Create</strong> → Keys → JSON.<br/>
-                Use JSON fields <code>client_email</code> and <code>private_key</code>.<br/>
-                Enable <strong>Google Sheets API</strong> on the project.
+                Comma-separated list you choose, e.g.<br/>
+                <code>naturalabs.io,clickbaitagency.com</code><br/>
+                (optional <code>gmail.com</code> only for testing — remove for production).
               </td>
-              <td><span class="tag new">NEW</span></td>
+              <td>Multi-domain allowlist</td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_SERVICE_ACCOUNT_EMAIL</code></td>
+              <td>
+                GCP → <strong>IAM &amp; Admin → Service Accounts</strong> → create e.g. <code>yt-performance-reader</code>.<br/>
+                Copy <code>client_email</code> from the JSON key file<br/>
+                (e.g. <code>yt-performance-reader@…iam.gserviceaccount.com</code>).
+              </td>
+              <td>Sheets JWT auth</td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code></td>
+              <td>
+                Same JSON key → field <code>private_key</code>.<br/>
+                <strong>Local <code>.env</code>:</strong> wrap in double quotes; keep <code>\n</code> escapes.<br/>
+                <strong>Cloud Run:</strong> paste PEM only — must start with
+                <code>-----BEGIN PRIVATE KEY-----</code> (not <code>\"-----BEGIN</code>).<br/>
+                Bad JSON escaping → <code>ERR_OSSL_UNSUPPORTED</code> → app falls back to Demo data.
+              </td>
+              <td>Sheets JWT signing</td>
             </tr>
             <tr>
               <td><code>GOOGLE_SHEETS_SPREADSHEET_ID</code></td>
               <td>
-                From Sheet URL:<br/>
+                From the Sheet URL between <code>/d/</code> and <code>/edit</code>:<br/>
                 <code>https://docs.google.com/spreadsheets/d/<strong>SPREADSHEET_ID</strong>/edit</code><br/>
-                Share Sheet with the service account email (Viewer; Editor if n8n uses same SA).
+                Share that Sheet with the service account email as <strong>Viewer</strong>.
               </td>
-              <td><span class="tag new">NEW</span></td>
+              <td>Which Sheet to read</td>
             </tr>
             <tr>
               <td><code>GOOGLE_SHEETS_TAB</code></td>
-              <td>Tab name exactly: <code>performance_leaderboard</code> (header row required)</td>
-              <td><span class="tag new">NEW</span></td>
+              <td>
+                Exact tab name n8n upserts into: <code>performance_leaderboard</code>.
+              </td>
+              <td>Which tab / range</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <div class="card explain">
-        <h3>C) Env file template</h3>
+        <h3>C) Env file template (placeholders only)</h3>
         <div class="flow"># Auth (user login)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 NEXTAUTH_SECRET=
-NEXTAUTH_URL=https://yt.naturalabs.io
+NEXTAUTH_URL=http://localhost:3000
 ALLOWED_EMAIL_DOMAIN=naturalabs.io
+ALLOWED_EMAIL_DOMAINS=naturalabs.io,clickbaitagency.com
 
 # Data (server-only — service account)
 GOOGLE_SERVICE_ACCOUNT_EMAIL=
-GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 GOOGLE_SHEETS_SPREADSHEET_ID=
 GOOGLE_SHEETS_TAB=performance_leaderboard</div>
         <div class="note">
-          <strong>Never</strong> put the service account key, OAuth secret, or Ads developer token in frontend JS.
-          Only the Next.js server / Cloud Run env uses them.
-          For <code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code>, keep <code>\n</code> escapes inside quotes.
+          Copy from <code>.env.example</code>, fill from GCP / Sheet / openssl.
+          <strong>Never</strong> commit <code>.env</code> or paste real keys into this mockup HTML.
+          On Cloud Run, set the same names under <strong>Variables &amp; secrets</strong> on the live revision.
         </div>
       </div>
 
       <div class="card explain">
-        <h3>D) OAuth client settings (copy exactly)</h3>
+        <h3>D) OAuth client settings (must match <code>NEXTAUTH_URL</code>)</h3>
         <table>
           <thead>
             <tr><th>Setting</th><th>Value</th></tr>
@@ -698,18 +757,26 @@ GOOGLE_SHEETS_TAB=performance_leaderboard</div>
             <tr>
               <td>Authorized JavaScript origins</td>
               <td>
-                <code>https://yt.naturalabs.io</code><br/>
-                <code>http://localhost:3000</code> (local)
+                <code>http://localhost:3000</code><br/>
+                <code>https://yt-performance-485547784117.europe-west1.run.app</code><br/>
+                <code>https://yt.naturalabs.io</code> (when custom domain is mapped)
               </td>
             </tr>
             <tr>
               <td>Authorized redirect URIs</td>
               <td>
-                <code>https://yt.naturalabs.io/api/auth/callback/google</code><br/>
-                <code>http://localhost:3000/api/auth/callback/google</code> (local)
+                <code>http://localhost:3000/api/auth/callback/google</code><br/>
+                <code>https://yt-performance-485547784117.europe-west1.run.app/api/auth/callback/google</code><br/>
+                <code>https://yt.naturalabs.io/api/auth/callback/google</code> (when domain ready)
               </td>
             </tr>
-            <tr><td>Sign-in allow rule</td><td>email ends with <code>@naturalabs.io</code> only</td></tr>
+            <tr>
+              <td>Sign-in allow rule (app)</td>
+              <td>
+                Email domain in <code>ALLOWED_EMAIL_DOMAINS</code>
+                (default: <code>@naturalabs.io</code>, <code>@clickbaitagency.com</code>)
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -717,25 +784,27 @@ GOOGLE_SHEETS_TAB=performance_leaderboard</div>
       <div class="card explain">
         <h3>E) Step-by-step: create OAuth web client</h3>
         <ol>
-          <li>Open <a class="link" href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a></li>
-          <li><strong>APIs &amp; Services → OAuth consent screen</strong> — configure (Internal if Workspace)</li>
+          <li>Open <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> → project <code>naturalabs-youtube-performance</code></li>
+          <li><strong>APIs &amp; Services → OAuth consent screen</strong> — configure (Internal if Workspace; add Test users if External/Testing)</li>
           <li><strong>Credentials → Create credentials → OAuth client ID</strong></li>
           <li>Application type: <strong>Web application</strong></li>
-          <li>Add origins + redirect URIs from section D</li>
-          <li>Copy <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code></li>
+          <li>Add origins + redirect URIs from section D (local + Cloud Run URL)</li>
+          <li>Copy into <code>.env</code>: <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code></li>
+          <li>Mirror the same three auth vars (+ <code>NEXTAUTH_URL</code>) on Cloud Run</li>
         </ol>
       </div>
 
       <div class="card explain">
         <h3>F) Step-by-step: service account + Sheet</h3>
         <ol>
-          <li>GCP → <strong>IAM &amp; Admin → Service Accounts → Create</strong> (e.g. <code>yt-performance-reader</code>)</li>
-          <li><strong>Keys → Add key → JSON</strong> — download; map to email + private key env vars</li>
+          <li>GCP → <strong>IAM &amp; Admin → Service Accounts → Create</strong> → <code>yt-performance-reader</code></li>
+          <li><strong>Keys → Add key → JSON</strong> — download once; store securely (not in git)</li>
+          <li>Map JSON → env: <code>client_email</code> → <code>GOOGLE_SERVICE_ACCOUNT_EMAIL</code>; <code>private_key</code> → <code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code></li>
           <li><strong>APIs &amp; Services → Library → Google Sheets API → Enable</strong></li>
-          <li>Create a private Google Sheet; tab name <code>performance_leaderboard</code>; add header row</li>
-          <li>Copy spreadsheet ID from the URL into <code>GOOGLE_SHEETS_SPREADSHEET_ID</code></li>
-          <li>Share Sheet with the service account email (Viewer minimum)</li>
-          <li>Give n8n Sheets credential write access to the same Sheet</li>
+          <li>Private Sheet tab <code>performance_leaderboard</code> with header row; n8n upserts rows here</li>
+          <li>Copy spreadsheet ID from URL → <code>GOOGLE_SHEETS_SPREADSHEET_ID</code></li>
+          <li>Share Sheet with the service account email as <strong>Viewer</strong></li>
+          <li>If badge says <strong>Demo data</strong>, check Cloud Run logs for <code>[sheets]</code> / private-key PEM format</li>
         </ol>
       </div>
 
@@ -760,69 +829,419 @@ GOOGLE_SHEETS_TAB=performance_leaderboard</div>
             </tr>
           </tbody>
         </table>
+        <div class="note warn">
+          Full incident table + countermeasures: open tab <strong>7. Countermeasures</strong>.
+        </div>
       </div>
     </section>
 
     <!-- DEPLOY -->
     <section id="deploy" class="panel">
       <div class="card explain">
-        <h2>Deploy on GCP (Cloud Run)</h2>
+        <h2>How we deployed on GCP</h2>
         <p class="muted">
-          Recommended host for this Next.js app. n8n stays where it is — only the website moves to Cloud Run.
+          Live path used for this app. n8n stays elsewhere — only the Next.js website runs on Cloud Run.
         </p>
-        <div class="flow">GitHub / Docker build
+        <div class="flow">GitHub: automatesolutions/yt-performance
+      ↓  (push to main / watched branch)
+Cloud Build trigger (GitHub connection)
+      ↓  docker build (Dockerfile → Next.js standalone, PORT 8080)
+Artifact Registry image
       ↓
-Artifact Registry (container image)
+Cloud Run service: yt-performance
+      · project: naturalabs-youtube-performance (485547784117)
+      · region: europe-west1  (live service)
+      · URL: https://yt-performance-485547784117.europe-west1.run.app
       ↓
-Cloud Run service
+Set Cloud Run env vars (same names as .env — see tab 5)
       ↓
-Custom domain: yt.naturalabs.io
-      ↓
-Google OAuth + Sheet read via env / Secret Manager</div>
+(optional next) Custom domain yt.naturalabs.io + update NEXTAUTH_URL / OAuth</div>
       </div>
 
       <div class="card explain">
-        <h3>Deploy checklist</h3>
+        <h3>Repo files that power deploy</h3>
+        <table>
+          <thead>
+            <tr><th>File</th><th>Role</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Dockerfile</code></td>
+              <td>Multi-stage build: <code>npm ci</code> → <code>npm run build</code> → run <code>node server.js</code> on port <strong>8080</strong></td>
+            </tr>
+            <tr>
+              <td><code>next.config.ts</code></td>
+              <td><code>output: "standalone"</code> for smaller Cloud Run image</td>
+            </tr>
+            <tr>
+              <td><code>cloudbuild.yaml</code></td>
+              <td>Build image → push Artifact Registry → <code>gcloud run deploy</code></td>
+            </tr>
+            <tr>
+              <td><code>.dockerignore</code></td>
+              <td>Keeps <code>.env</code> / secrets out of the image</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card explain">
+        <h3>Step-by-step (what we did)</h3>
         <ol>
-          <li>Create Sheet + headers; n8n upsert writing rows</li>
-          <li>Service account can read the Sheet; OAuth web client created</li>
-          <li>Enable Cloud Run, Artifact Registry, Secret Manager APIs</li>
-          <li>Build Next.js container (standalone) → push to Artifact Registry</li>
-          <li>Deploy Cloud Run service; set env vars / secrets (section 5)</li>
-          <li>Map custom domain <code>yt.naturalabs.io</code></li>
-          <li>Update OAuth origins/redirects to production URL</li>
-          <li>Sign in with <code>@naturalabs.io</code> — confirm live data (not Demo)</li>
+          <li>Create GCP project <code>naturalabs-youtube-performance</code>; enable <strong>Cloud Run</strong>, <strong>Artifact Registry</strong>, <strong>Cloud Build</strong>, <strong>Sheets API</strong></li>
+          <li>Create Artifact Registry Docker repo (e.g. <code>yt-performance</code>)</li>
+          <li>Push app to GitHub <code>automatesolutions/yt-performance</code> (no secrets in repo — Push Protection blocks real OAuth secrets)</li>
+          <li>Connect GitHub → Cloud Build trigger; grant Cloud Build SA
+            <strong>Developer Connect Read Token Accessor</strong> (+ Secret Manager accessor if needed)</li>
+          <li>On push: Cloud Build runs Docker build + deploys service <code>yt-performance</code></li>
+          <li>Cloud Run → <strong>Edit &amp; deploy new revision</strong> → Variables: paste all keys from tab 5
+            (auth + service account + spreadsheet id + tab). Verify on the revision with <strong>100% traffic</strong></li>
+          <li>Google OAuth: add Cloud Run URL as origin +
+            <code>/api/auth/callback/google</code> redirect</li>
+          <li>Hard refresh <code>/login</code> → Sign in with Google; Leaderboard badge should say
+            <strong>Live Sheet</strong> (not Demo)</li>
+          <li><span class="tag warn">TODO</span> Map custom domain <code>yt.naturalabs.io</code>, then set
+            <code>NEXTAUTH_URL</code> + OAuth URLs to that host</li>
         </ol>
         <div class="note">
-          Cloud Run: allow unauthenticated ingress (the app handles Google login).
-          Suggested: 1 vCPU, 512MB–1GB RAM. Prefer Secret Manager for secrets.
+          Ingress: allow unauthenticated (app does Google login). Port: <strong>8080</strong>.
+          Prefer Secret Manager for client secret / NextAuth secret / SA private key.
+          After each code fix: <strong>commit → push → wait for Cloud Build</strong> (no local
+          <code>npm run build</code> required for Cloud Run).
         </div>
+      </div>
+
+      <div class="card explain">
+        <h3>Where to debug on GCP</h3>
+        <table>
+          <thead>
+            <tr><th>Console</th><th>Look for</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Cloud Build → History</td>
+              <td>Latest build SUCCESS after your push; deploy step finished</td>
+            </tr>
+            <tr>
+              <td>Cloud Run → Revisions</td>
+              <td>Revision with 100% traffic; Variables list has all auth + Sheets keys (full, not truncated)</td>
+            </tr>
+            <tr>
+              <td>Cloud Run → Logs</td>
+              <td>
+                Startup banner <code>localhost:8080</code> is normal inside the container.<br/>
+                <code>[sheets] Failed…</code> / <code>ERR_OSSL_UNSUPPORTED</code> = bad private key PEM<br/>
+                Yellow login text = auth env missing/inlined — see tab 7
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div class="card explain">
         <h3>Local vs production</h3>
         <table>
           <thead>
-            <tr><th></th><th>Local</th><th>Production</th></tr>
+            <tr><th></th><th>Local</th><th>Production (now)</th><th>Production (target)</th></tr>
           </thead>
           <tbody>
             <tr>
               <td><code>NEXTAUTH_URL</code></td>
               <td><code>http://localhost:3000</code></td>
+              <td>Cloud Run <code>.run.app</code> URL</td>
               <td><code>https://yt.naturalabs.io</code></td>
             </tr>
             <tr>
               <td>OAuth origins / redirects</td>
-              <td>include localhost</td>
-              <td>include production URL</td>
+              <td>localhost</td>
+              <td>Cloud Run URL + callback path</td>
+              <td>custom domain + callback path</td>
             </tr>
             <tr>
-              <td>Empty auth + Sheet env</td>
-              <td>Fixture / demo data works</td>
-              <td>Must set all env vars for live data + login</td>
+              <td>Env storage</td>
+              <td><code>.env</code> (gitignored)</td>
+              <td>Cloud Run Variables (live revision)</td>
+              <td>Secret Manager preferred</td>
+            </tr>
+            <tr>
+              <td>Empty auth / bad SA key</td>
+              <td>Demo / fixture OK</td>
+              <td>Yellow auth warning or Demo data badge</td>
+              <td>Must be fully configured</td>
             </tr>
           </tbody>
         </table>
+        <div class="note warn">
+          Deploy pitfalls + fixes: tab <strong>7. Countermeasures</strong>.
+        </div>
+      </div>
+    </section>
+
+    <!-- COUNTERMEASURES -->
+    <section id="countermeasures" class="panel">
+      <div class="card explain">
+        <h2>Countermeasures — getting data &amp; deploying safely</h2>
+        <p class="muted">
+          Lessons from production setup. Use this when login shows yellow text, Leaderboard says
+          <strong>Demo data</strong>, Cloud Build fails, or secrets leak.
+        </p>
+        <div class="note danger">
+          <strong>Never</strong> commit real <code>.env</code> values, paste secrets into HTML/README,
+          or put OAuth / SA keys in chat, screenshots, or <code>.env.example</code>.
+          If exposed: <span class="tag danger">ROTATE</span> OAuth client secret, regenerate
+          <code>NEXTAUTH_SECRET</code>, and create a new SA key (delete the old JSON key).
+        </div>
+      </div>
+
+      <div class="card explain">
+        <h3>1) Getting credentials &amp; Sheet data — risks &amp; fixes</h3>
+        <table class="cm-table">
+          <thead>
+            <tr><th>Symptom / risk</th><th>Root cause</th><th>Countermeasure</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag danger">Yellow</span> “Auth is not configured”</td>
+              <td>
+                Missing <code>GOOGLE_CLIENT_ID</code> / <code>GOOGLE_CLIENT_SECRET</code> /
+                <code>NEXTAUTH_SECRET</code> on the <em>serving</em> revision; truncated Client ID;
+                or Next.js baked empty env at Docker build time
+              </td>
+              <td>
+                <span class="tag fix">FIX</span> Set all 3 on revision with 100% traffic.<br/>
+                Client ID must end with <code>.apps.googleusercontent.com</code>.<br/>
+                Code: <code>force-dynamic</code> on login/layout + dynamic
+                <code>process.env[name]</code> reads (avoid build-time empty inline).<br/>
+                Redeploy after code change: commit → push → Cloud Build.
+              </td>
+            </tr>
+            <tr>
+              <td>OAuth redirect / origin error</td>
+              <td><code>NEXTAUTH_URL</code> ≠ browser URL, or Google Console missing origin/callback</td>
+              <td>
+                <span class="tag fix">FIX</span> Exact match, no trailing slash.<br/>
+                Add origin = site URL; redirect =
+                <code>{NEXTAUTH_URL}/api/auth/callback/google</code>.<br/>
+                When switching to <code>yt.naturalabs.io</code>, update Cloud Run + Google OAuth together.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="tag warn">AccessDenied</span> after Google login</td>
+              <td>Email domain not in allowlist</td>
+              <td>
+                <span class="tag fix">FIX</span> Set <code>ALLOWED_EMAIL_DOMAINS</code> to real company domains only.<br/>
+                Remove <code>gmail.com</code> in production.<br/>
+                If OAuth consent is Testing: add user as Test user in Google Console.
+              </td>
+            </tr>
+            <tr>
+              <td>Badge: <strong>Demo data</strong></td>
+              <td>
+                Sheets read failed or empty. Log often:
+                <code>ERR_OSSL_UNSUPPORTED</code> / <code>[sheets] Failed…</code>
+                from bad PEM private key
+              </td>
+              <td>
+                <span class="tag fix">FIX</span> Re-paste <code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code>:<br/>
+                Must start <code>-----BEGIN PRIVATE KEY-----</code> — <em>not</em>
+                <code>\"-----BEGIN</code>.<br/>
+                Cloud Run: no wrapping quotes; <code>\n</code> newlines OK.<br/>
+                Confirm SA email, spreadsheet ID, tab name, Sheets API enabled,
+                Sheet shared Viewer to SA.<br/>
+                Success = badge <strong>Live Sheet</strong>.
+              </td>
+            </tr>
+            <tr>
+              <td>Wrong / incomplete Sheet columns</td>
+              <td>n8n headers mismatch (e.g. missing <code>conv_value</code>, <code>duration_seconds</code>)</td>
+              <td>
+                <span class="tag fix">FIX</span> Header row must match app schema;
+                duration from <code>duration_millis/1000</code>.<br/>
+                App reads range <code>A:ZZ</code> so columns past Z are included.
+              </td>
+            </tr>
+            <tr>
+              <td>GitHub Push Protection blocked push</td>
+              <td>Real secrets committed in <code>.env.example</code> or tracked files</td>
+              <td>
+                <span class="tag fix">FIX</span> Only placeholders in example files.<br/>
+                <code>.env</code> gitignored. Never force-push secrets “to fix” —
+                rotate the exposed secret instead.
+              </td>
+            </tr>
+            <tr>
+              <td>Secrets in chat / screenshots</td>
+              <td>Human paste of Client secret, NEXTAUTH_SECRET, or full PEM</td>
+              <td>
+                <span class="tag danger">ROTATE</span> Immediately after exposure.<br/>
+                Prefer Secret Manager; share via password manager, not Slack/chat.
+              </td>
+            </tr>
+            <tr>
+              <td><code>ALLOWED_EMAIL_DOMAIN</code> set to a URL</td>
+              <td>Confused with <code>NEXTAUTH_URL</code></td>
+              <td>
+                Domain only: <code>naturalabs.io</code>.<br/>
+                Site URL only in <code>NEXTAUTH_URL</code>.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card explain">
+        <h3>2) Deploying to GCP — risks &amp; fixes</h3>
+        <table class="cm-table">
+          <thead>
+            <tr><th>Symptom / risk</th><th>Root cause</th><th>Countermeasure</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Local <code>gcloud builds submit</code> SSL fail</td>
+              <td>Antivirus (e.g. Avast) intercepting TLS (<code>CERTIFICATE_VERIFY_FAILED</code>)</td>
+              <td>
+                <span class="tag fix">FIX</span> Prefer Console Cloud Build + GitHub trigger
+                (no local Docker push). Do not disable TLS globally as a habit.
+              </td>
+            </tr>
+            <tr>
+              <td>Cloud Build: <code>fetchReadToken</code> denied</td>
+              <td>Wrong SA missing Developer Connect / Secret access</td>
+              <td>
+                <span class="tag fix">FIX</span> Grant
+                <strong>Developer Connect Read Token Accessor</strong>
+                (and Secret Manager Secret Accessor if used) to
+                <code>PROJECT_NUMBER@cloudbuild.gserviceaccount.com</code>.
+              </td>
+            </tr>
+            <tr>
+              <td>Env vars “set” but app ignores them</td>
+              <td>
+                Looking at old revision; Cloud Build redeploy; or Next.js static bake of env
+              </td>
+              <td>
+                <span class="tag fix">FIX</span> Always check Variables on revision with
+                <strong>100% traffic</strong>.<br/>
+                After code env-read fixes: push new image.<br/>
+                Keep <code>force-dynamic</code> + runtime <code>getEnv()</code> helpers.
+              </td>
+            </tr>
+            <tr>
+              <td>Truncated env in Console UI</td>
+              <td>Paste cut off mid-string (Client ID / URL / PEM)</td>
+              <td>
+                <span class="tag fix">FIX</span> Paste full values; scroll field end;
+                Client ID must include <code>.apps.googleusercontent.com</code>;
+                <code>NEXTAUTH_URL</code> must include full <code>europe-west1.run.app</code>.
+              </td>
+            </tr>
+            <tr>
+              <td>Logs show <code>Local: http://localhost:8080</code></td>
+              <td>Normal Next.js banner inside container</td>
+              <td>
+                <span class="tag have">OK</span> Not a misconfig. Public URL is Cloud Run HTTPS.
+                Traffic: browser → Run URL → container :8080.
+              </td>
+            </tr>
+            <tr>
+              <td>Code fix not live</td>
+              <td>Only local edit; no push / build still running</td>
+              <td>
+                <span class="tag fix">FIX</span> Commit → push → wait Cloud Build SUCCESS →
+                hard refresh. No local build required for deploy.
+              </td>
+            </tr>
+            <tr>
+              <td>Region mismatch</td>
+              <td><code>cloudbuild.yaml</code> default vs live service region</td>
+              <td>
+                Confirm live service region (<strong>europe-west1</strong> today).
+                Align trigger substitutions / deploy region so you don’t create a second empty service.
+              </td>
+            </tr>
+            <tr>
+              <td>Custom domain not ready</td>
+              <td>DNS / Cloud Run domain mapping incomplete</td>
+              <td>
+                Keep using <code>.run.app</code> until Ready.<br/>
+                Then: map domain → update <code>NEXTAUTH_URL</code> → update OAuth origins/redirects → redeploy.
+              </td>
+            </tr>
+            <tr>
+              <td>Plain env secrets on Cloud Run</td>
+              <td>Secrets visible to anyone with Run Viewer/Editor</td>
+              <td>
+                <span class="tag warn">HARDEN</span> Move
+                <code>GOOGLE_CLIENT_SECRET</code>, <code>NEXTAUTH_SECRET</code>,
+                <code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code> to
+                <strong>Secret Manager</strong>; mount as secrets on the service.
+              </td>
+            </tr>
+            <tr>
+              <td>Image contains secrets</td>
+              <td><code>.env</code> copied into Docker context</td>
+              <td>
+                <span class="tag fix">FIX</span> Keep <code>.dockerignore</code> excluding
+                <code>.env*</code>. Never <code>ENV</code> secrets in Dockerfile.
+                Inject only at Cloud Run runtime.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card explain">
+        <h3>3) Safe checklist — before / after every deploy</h3>
+        <ol>
+          <li><strong>Secrets:</strong> only in local <code>.env</code> (gitignored) + Cloud Run / Secret Manager — never git, HTML, or chat</li>
+          <li><strong>Auth trio present</strong> on live revision: Client ID (full), Client secret, NextAuth secret</li>
+          <li><strong>NEXTAUTH_URL</strong> matches the URL in the browser bar</li>
+          <li><strong>OAuth</strong> origin + callback match that same host</li>
+          <li><strong>SA private key</strong> valid PEM; Sheet shared Viewer; tab = <code>performance_leaderboard</code></li>
+          <li><strong>Allowlist</strong> = company domains only (no broad Gmail in prod)</li>
+          <li><strong>Cloud Build</strong> SUCCESS after push; test the revision that has traffic</li>
+          <li><strong>Smoke test:</strong> <code>/login</code> shows Sign in with Google; <code>/performance</code> shows Live Sheet</li>
+          <li>If anything secret leaked → <span class="tag danger">ROTATE</span> before continuing</li>
+        </ol>
+      </div>
+
+      <div class="card explain">
+        <h3>4) Quick decision tree</h3>
+        <div class="flow">Login yellow “Auth is not configured”
+  → Check live revision env (3 auth vars, full Client ID)
+  → If present: ensure latest image (force-dynamic + getEnv) is deployed
+  → Hard refresh /login
+
+Leaderboard “Demo data”
+  → Cloud Run Logs → search [sheets] or ERR_OSSL
+  → Fix PRIVATE_KEY PEM format + Sheet share + spreadsheet ID/tab
+  → Redeploy revision → expect “Live Sheet”
+
+OAuth error / redirect_uri_mismatch
+  → Align NEXTAUTH_URL + Google Console origin/callback
+
+AccessDenied
+  → ALLOWED_EMAIL_DOMAINS + OAuth Test users
+
+Build fails fetchReadToken
+  → IAM on cloudbuild service account
+
+Push blocked (secret scanning)
+  → Remove secrets from files; rotate; push placeholders only</div>
+      </div>
+
+      <div class="card explain">
+        <h3>5) Data path reminder (no public Sheet)</h3>
+        <p class="muted">
+          Google Ads → <strong>n8n</strong> (upsert) → private Sheet tab
+          <code>performance_leaderboard</code> → Cloud Run app reads via
+          <strong>service account</strong> (Viewer). Users authenticate with
+          <strong>Google OAuth</strong>; they never need the Sheet link.
+        </p>
+        <div class="note">
+          Countermeasures protect two surfaces: (1) how secrets &amp; Sheet access are obtained/stored,
+          (2) how the container is built and configured on Cloud Run so runtime env actually works.
+        </div>
       </div>
     </section>
 
@@ -831,8 +1250,8 @@ Google OAuth + Sheet read via env / Secret Manager</div>
       <div class="card explain">
         <h2>How the three views fit together</h2>
         <ol>
-          <li>User opens <code>https://yt.naturalabs.io/performance</code></li>
-          <li>Google login — only <code>@naturalabs.io</code> allowed</li>
+          <li>User opens <code>https://yt.naturalabs.io/performance</code> (or current Cloud Run URL)</li>
+          <li>Google login — domains in <code>ALLOWED_EMAIL_DOMAINS</code></li>
           <li>Default view = <strong>Leaderboard</strong></li>
           <li>Switch to <strong>Pivot</strong> for client rollups</li>
           <li>Click a creative → <strong>Detail</strong> (KPIs + chart + campaigns)</li>
@@ -850,7 +1269,8 @@ Google OAuth + Sheet read via env / Secret Manager</div>
           <li>Pivot last</li>
         </ol>
         <div class="note">
-          See tabs <strong>4. n8n</strong>, <strong>5. Credentials</strong>, and <strong>6. Deploy</strong> for implementation detail.
+          See tabs <strong>4. n8n</strong>, <strong>5. Credentials</strong>,
+          <strong>6. Deploy</strong>, and <strong>7. Countermeasures</strong>.
         </div>
       </div>
     </section>
